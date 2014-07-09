@@ -8,9 +8,8 @@ Vagrant.configure("2") do |config|
   config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/precise/20140623/precise-server-cloudimg-amd64-vagrant-disk1.box"
 
   not_windows = RUBY_PLATFORM =~ /darwin/ || RUBY_PLATFORM =~ /linux/
-  nfs_setting = RUBY_PLATFORM =~ /darwin/ || RUBY_PLATFORM =~ /linux/ 
-  # || Vagrant.has_plugin?("vagrant-winnfsd")
-  # config.winnfsd.logging = "on"
+  nfs_setting = RUBY_PLATFORM =~ /darwin/ || RUBY_PLATFORM =~ /linux/ || Vagrant.has_plugin?("vagrant-winnfsd")
+  config.winnfsd.logging = "off"
 
   ## For masterless, mount your file roots file root
   config.vm.synced_folder "salt/roots/", "/srv/", :nfs => not_windows
