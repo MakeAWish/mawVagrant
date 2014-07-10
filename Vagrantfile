@@ -4,8 +4,8 @@
 
 Vagrant.configure("2") do |config|
   ## Choose your base box
-  config.vm.box = "gsoi-php55"
-  config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/precise/20140623/precise-server-cloudimg-amd64-vagrant-disk1.box"
+  config.vm.box = "ubuntu1204-64bits"
+  config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/precise/current/precise-server-cloudimg-amd64-vagrant-disk1.box"
 
   not_windows = RUBY_PLATFORM =~ /darwin/ || RUBY_PLATFORM =~ /linux/
   nfs_setting = RUBY_PLATFORM =~ /darwin/ || RUBY_PLATFORM =~ /linux/ || Vagrant.has_plugin?("vagrant-winnfsd")
