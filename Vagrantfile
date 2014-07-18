@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
   config.winnfsd.logging = "off"
 
   ## For masterless, mount your file roots file root
-  config.vm.synced_folder "salt/roots/", "/srv/", :nfs => not_windows
+  config.vm.synced_folder "salt/roots/", "/srv/", :nfs => nfs_setting
 
   # Projects
   if Dir.exists?('projects/mawDevs/')
