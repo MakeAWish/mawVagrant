@@ -6,3 +6,4 @@ base:
     - mod_apache
     - mysql
     - git
+    - acl
