@@ -59,7 +59,7 @@ Vagrant.configure("2") do |config|
   config.vm.hostname = _vm_name + ".lan"
   
   if Vagrant.has_plugin?("vagrant-winnfsd")
-  	config.winnfsd.logging = "on"
+  	config.winnfsd.logging = "off"
   end
 
   if _not_windows
