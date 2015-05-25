@@ -3,46 +3,84 @@
 
 
 Vagrant.configure("2") do |config|
-  ## Choose your base box
-  config.vm.box = "ubuntu1204-64bits"
-  config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/precise/current/precise-server-cloudimg-amd64-vagrant-disk1.box"
 
-  not_windows = RUBY_PLATFORM =~ /darwin/ || RUBY_PLATFORM =~ /linux/
-  nfs_setting = RUBY_PLATFORM =~ /darwin/ || RUBY_PLATFORM =~ /linux/ || Vagrant.has_plugin?("vagrant-winnfsd")
-  config.winnfsd.logging = "off"
+  ## Choose your base box, not necessarily this one
+  config.vm.box = "precise-server-amd64"
+  config.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/precise/current/precise-server-cloudimg-amd64-vagrant-disk1.box"
 
-  ## For masterless, mount your file roots file root
-  config.vm.synced_folder "salt/roots/", "/srv/", :nfs => nfs_setting
+  ## Variables for NFS
+  _not_windows = RUBY_PLATFORM =~ /darwin/ || RUBY_PLATFORM =~ /linux/
+  _nfs_setting = RUBY_PLATFORM =~ /darwin/ || RUBY_PLATFORM =~ /linux/ || Vagrant.has_plugin?("vagrant-winnfsd")
 
-  # Projects
-  if Dir.exists?('projects/mawDevs/')
-    config.vm.synced_folder "projects/mawDevs/", "/var/www/maw/", :nfs => nfs_setting
+  @sync_folders = Array.new
+
+  ## Provisioning folders
+  @sync_folders.push({
+  	"from"=>"salt/roots/",
+  	"to"=>"/srv/"
+  	});
+
+  @sync_folders.push({
+  	"from"=>"salt/roots/salt/apache2/html-default",
+  	"to"=>"/var/www/html/default/"
+  	});
+  ## / Provisioning folders
+
+  ## Projects folders
+  @sync_folders.push({
+  	"from"=>"projects/mawDevs/",
+  	"to"=>"/var/www/maw/"
+  	});
+
+  @sync_folders.push({
+    "from"=>"projects/mawHtml/",
+    "to"=>"/var/www/html/"
+    });
+
+  ## Filter on folder that really exists
+  ## for example, projects/project3/ doest not exist
+  @sync_folders.select! { |a| Dir.exists?(a["from"]) }
+
+  # Reorder folders for winnfsd plugin compatilibty
+  # see https://github.com/GM-Alex/vagrant-winnfsd/issues/12#issuecomment-78195957
+  @sync_folders.sort! { |a,b| a["from"].length <=> b["from"].length }
+
+  @sync_folders.each do |project|
+  	config.vm.synced_folder project["from"], project["to"],
+  	:nfs => _nfs_setting,
+  	mount_options:['nolock,vers=3,udp,noatime,actimeo=1']
   end
-  
-  # Network
-  config.vm.network :private_network, ip: '10.0.0.169'
-  config.vm.network :public_network
-  config.vm.hostname = "maw.local"
 
-  if not_windows
-    if Vagrant.has_plugin?("vagrant-hostsupdater")
-      config.hostsupdater.aliases = [
-        "maw.local",
-      ]
-      config.hostsupdater.remove_on_suspend = true
-    else
-      puts 'You should install vagrant-hostsupdater plugin for automatic hosts update'
-    end
-   else
-     puts 'Vous devez ajoutez ces enregistrements dans votre fichier hosts :'
-     puts '10.0.0.169 maw.local' 
+  # Network
+  _vm_ip = "10.0.0.169"
+  _vm_name = "maw"
+  config.vm.network :private_network, ip: _vm_ip
+  config.vm.network :public_network
+  config.vm.hostname = _vm_name + ".lan"
+  
+  if Vagrant.has_plugin?("vagrant-winnfsd")
+  	config.winnfsd.logging = "on"
+  end
+
+  if _not_windows
+  	if Vagrant.has_plugin?("vagrant-hostsupdater")
+  		config.hostsupdater.aliases = [
+  			config.vm.hostname,
+  		]
+  		config.hostsupdater.remove_on_suspend = true
+  	else
+  		puts 'You should install vagrant-hostsupdater plugin for automatic hosts update'
+  	end
+  else
+  	puts 'You should add the following matching to your host :'
+  	puts _vm_ip + ' ' + config.vm.hostname
   end
 
   config.vm.provider :virtualbox do |vb|
-    vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/.", "1"]
-    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-    vb.customize ["modifyvm", :id, "--memory", 2048]
-    vb.customize ["modifyvm", :id, "--name", "maw"]
+  	vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/.", "1"]
+  	vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+  	vb.customize ["modifyvm", :id, "--memory", 2048]
+  	vb.customize ["modifyvm", :id, "--name", _vm_name]
   end
 
   ## Set your salt configs here
